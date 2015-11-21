@@ -1,4 +1,12 @@
 import { VSCVim } from "./extension"
+import { 
+  Selection, 
+  Position, 
+  window, 
+  TextDocument, 
+  TextEditor,
+  Range
+} from 'vscode'; 
 
 interface IndividualTestResults {
   totalTests : number
@@ -15,7 +23,7 @@ interface OverallTestResults {
 }
 
 interface Test {
-  test: () => Promise<any>,
+  test: () => PromiseLike<any>,
   name: string,
 }
 
@@ -39,7 +47,7 @@ class TestHarness {
     }
   }
   
-  test(name: string, test: () => Promise<any>): void {
+  test(name: string, test: () => PromiseLike<any>): void {
     this._tests.push({ test, name })
   }
   
@@ -49,10 +57,10 @@ class TestHarness {
    * TODO - figure out if I can transpile ES6 to ES5.
    * TODO - Accept non promised tests. Don't care right now. 
    */
-  runTests(): Promise<any> {
+  runTests(): PromiseLike<any> {
     const testListCopy = this._tests.slice()
     
-    const iterate: () => Promise<any> = () => {
+    const iterate: () => PromiseLike<any> = () => {
       if (testListCopy.length === 0) {
         console.log(`OVERALL: ${ this._overallTestState.passes }/${ this._overallTestState.totalTests } tests passing.`)
         
@@ -82,10 +90,6 @@ class TestHarness {
         }
 
         return iterate()
-      }).catch((err) => {
-        console.log("STOP REJECTING PROMISES IN TESTING YOU IDIOT")
-        console.log(JSON.stringify(err))
-        console.log(err.stack)
       })
     }
     
@@ -108,20 +112,42 @@ export class Tests extends TestHarness {
   constructor(v: VSCVim) {
     super()
     
-    this.test("simple", () => {
-      this.shouldEqual(1, 1)
-      this.shouldEqual("a", "a")
-      
-      return Promise.resolve(0)
-    })
-    
-    this.test("dumb", () => {
-      this.shouldEqual(1, 1)
-      this.shouldEqual(0, 0)
-            
-      return Promise.resolve(0)
+    this.test("hjkl", () => {
+      return this.setText(`
+THIS IS ONLY
+A TEST.`)
     })
     
     this.runTests()
+  }
+  
+  /**
+   * Replaces the entire text of the editor with the passed in text. Intended to be 
+   * used like so:
+   * 
+   * setText(`
+REPLACEMENT TEXT STARTS HERE
+FIRST NEWLINE IS IGNORED
+FOR CONVENIENCE.`)
+   */
+  setText(text: string): PromiseLike<any> {
+    const formattedText = text.split("\n").slice(1).join("\n")
+    return this.editor.edit(e => {
+      e.delete(new Range(new Position(0, 0), 
+                         new Position(this.document.lineCount - 1, 
+                                      this.document.lineAt(this.document.lineCount - 1).text.length)))
+    }).then(res => {
+      return this.editor.edit(e => {
+        e.insert(new Position(0, 0), formattedText)
+      })
+    })
+  }
+  
+  get document(): TextDocument {
+    return window.activeTextEditor.document
+  }
+  
+  get editor(): TextEditor {
+    return window.activeTextEditor
   }
 }
