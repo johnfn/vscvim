@@ -300,6 +300,18 @@ class Vim {
 		];
 	}
 	
+	updateStatusBar(): void {
+		let status: string;
+		
+		switch (this.state.mode) {
+			case VimMode.Insert: status = "INSERT MODE"; break;
+			case VimMode.Normal: status = "NORMAL MODE"; break;
+			default: status = "??? MODE"; break;
+		}
+		
+		vscode.window.setStatusBarMessage(status)
+	}
+	
 	keyWasPressed(key: string): void {
 		let newState = clone(this.state, {
 			mostRecentKey: key
@@ -331,7 +343,9 @@ class Vim {
 			newState.textAction = null;
 			newState.command = new VimOperatorMove();
 		}
-		
+
 		this.state = newState;
+		
+		this.updateStatusBar()
 	}
 }
