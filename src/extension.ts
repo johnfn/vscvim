@@ -164,7 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "vscvim" is now active!'); 
 	
-	
+	VSCVim.getInstance(i => new Tests(i))
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
@@ -575,7 +575,7 @@ export class VSCVim {
 		this.updateStatusBar()
 	}
   
-  // For testing only.
+  // For testing only. //
     
 
   private static instance: VSCVim;
@@ -591,5 +591,3 @@ export class VSCVim {
     VSCVim.onInstanceChanged = () => cb(VSCVim.instance)
   }
 }
-
-VSCVim.getInstance(i => new Tests(i))
