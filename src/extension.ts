@@ -1,7 +1,10 @@
 // TODO
 // * Fix errors when text actions (hjkl etc) go off side of screen
 // * Need to start thinking about visual mode immediately
-  // * Making way too many assumptions about selections currently, only gonna get worse.
+//   * Making way too many assumptions about selections currently, only gonna get worse.
+// * The other hard thing I should start thinking about is .
+//   * Should not actually be _too_ hard since I could just save a reference to the previous state.
+//   * (And macros could be done by saving all states)
 
 import * as vscode from 'vscode'; 
 
@@ -286,10 +289,59 @@ class TextMotionMovement implements TextMotion {
 	}
 }
 
+class Util {
+  public static get editor(): vscode.TextEditor {
+    return vscode.window.activeTextEditor;
+  }
+  
+  public static get document(): vscode.TextDocument {
+    return Util.editor.document;
+  }
+  
+  /**
+   * TODO: Generators would be nice here.
+   * 
+   * Iterates over each character in the document, starting from startPosition. Also 
+   * shows newlines!
+   * 
+   * @param startPosition The position to start iterating from (or the current editor's position if null).
+   * 
+   */
+  public static forEachChar(cb: (pos: vscode.Position, char: string, done: () => void) => void, startPosition: vscode.Position = Util.editor.selection.start): vscode.Position {
+    let stopped         = false
+    const done          = () => stopped = true
+    
+    let currentCharPos  = startPosition.character
+    let currentLinePos  = startPosition.line
+    let currentLine     = Util.document.lineAt(startPosition.line).text
+    const getCurrentPos = () => new vscode.Position(currentLinePos, currentCharPos)
+    
+    while (true) {
+      cb(getCurrentPos(), currentLine[currentCharPos], done)
+      
+      if (stopped) break;
+      
+      currentCharPos++;
+      
+      if (currentCharPos >= currentLine.length) {
+        cb(getCurrentPos(), "\n", done)
+        if (stopped) break;
+        
+        currentCharPos = 0;
+        currentLinePos++;
+        
+        if (currentLinePos >= Util.document.lineCount) break;
+      }
+    }
+    
+    return getCurrentPos()
+  }
+}
+
 class TextMotionWord implements TextMotion {
   private _forward: boolean;
   
-  private static wordDelimiters = " ";
+  private static wordDelimiters = " \n";
   
   private static isDelimiter(char: string): boolean {
     return TextMotionWord.wordDelimiters.indexOf(char) !== -1;
@@ -300,27 +352,18 @@ class TextMotionWord implements TextMotion {
   }
   
   runTextMotion(): vscode.Selection {
-    const editor      = vscode.window.activeTextEditor;
-    const beginning   = editor.selection.start;
+    const editor        = vscode.window.activeTextEditor
+    let   seenDelimiter = false
     
-    const line        = editor.document.lineAt(beginning.line).text
-    const startIndex  = beginning.character;
-    let i;
-    let seenDelimiter = false;
+    const nextWordPosition = Util.forEachChar((pos, char, done) => {
+      if (TextMotionWord.isDelimiter(char)) {
+        seenDelimiter = true
+      } else if (seenDelimiter) {
+        done()
+      }
+    })
     
-    for (i = startIndex; i < line.length; i++) {
-      if (TextMotionWord.isDelimiter(line[i])) { 
-        seenDelimiter = true; 
-        continue;
-      }
-      
-      if (seenDelimiter) {
-        break;
-      }
-    }
-
-    return new vscode.Selection(new vscode.Position(beginning.line, i), 
-                                new vscode.Position(beginning.line, i));
+    return new vscode.Selection(nextWordPosition, nextWordPosition);
   }
 }
 
