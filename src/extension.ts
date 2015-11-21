@@ -331,6 +331,8 @@ class Util {
     let currentChar = () => Util.document.lineAt(currentPos.line).text[currentPos.character]
     
     while (true) {
+      let previousPos = currentPos
+      
       cb(currentPos, currentChar(), done)
       
       if (stopped) break
@@ -340,6 +342,11 @@ class Util {
         cb(currentPos, "\n", done)
         
         if (stopped) break;
+      }
+      
+      // We are at the beginning or end of the document.
+      if (currentPos.isEqual(previousPos)) {
+        cb(currentPos, "\n", done)
       }
     }
     
@@ -363,7 +370,8 @@ class Util {
            
       if (newLinePos < 0) {
         console.warn(`no clue what to do here...`)
-        return new vscode.Position(0, 0)
+        
+        return p
       }
       
       newCharPos = Util.document.lineAt(newLinePos).text.length
@@ -390,6 +398,8 @@ class Util {
       
       if (newLinePos >= Util.document.lineCount) {
          console.warn(`also no clue what to do here...`)
+         
+         return p
       }
     }
     
