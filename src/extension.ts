@@ -7,6 +7,7 @@
 //   * (And macros could be done by saving all states)
 
 import * as vscode from 'vscode'; 
+import { Tests } from "./tests"
 
 class VimAction {
 	public modes: VimMode[];
@@ -187,7 +188,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	*/
 	
-	const vim: Vim = new Vim();
+	const vim = new VSCVim();
 	
 
 	const disposables: vscode.Disposable[] = Keys.keyNames().map((key: string) => {
@@ -205,7 +206,6 @@ export function activate(context: vscode.ExtensionContext) {
 function clone<T>(obj: T, props: any = {}): T {
   if(obj === null || typeof(obj) !== 'object' || 'isActiveClone' in obj)
     return obj;
-
 
   var result: T = Object.setPrototypeOf({}, Object.getPrototypeOf(obj));
 
@@ -503,17 +503,19 @@ class VimOperatorMove implements VimOperator {
 	}
 }
 
-class Vim {
+export class VSCVim {
 	state: VimState;
-	actions: VimAction[] = [];
 	
 	constructor() {
 		this.state = {
-			mode: VimMode.Normal,
-			mostRecentKey: "",
-			textAction: null,
-			command: new VimOperatorMove()
-		};
+			mode          : VimMode.Normal,
+			mostRecentKey : "",
+			textAction    : null,
+			command       : new VimOperatorMove()
+		}
+    
+    VSCVim.instance = this
+    if (VSCVim.onInstanceChanged) VSCVim.onInstanceChanged()
 	}
 	
 	updateStatusBar(): void {
@@ -522,7 +524,7 @@ class Vim {
 		switch (this.state.mode) {
 			case VimMode.Insert: status = "INSERT MODE"; break;
 			case VimMode.Normal: status = "NORMAL MODE"; break;
-			default: status = "??? MODE"; break;
+			default:             status = "??? MODE";    break;
 		}
 		
 		vscode.window.setStatusBarMessage(status)
@@ -572,4 +574,22 @@ class Vim {
 		
 		this.updateStatusBar()
 	}
+  
+  // For testing only.
+    
+
+  private static instance: VSCVim;
+  
+  private static onInstanceChanged: () => void;
+  
+  /**
+   * The running instance of VSCVim. I don't condone the usage of this. I only
+   * use it for testing. 
+   */
+  public static getInstance(cb: (i: VSCVim) => void): void {
+    if (VSCVim.instance) cb(VSCVim.instance);
+    VSCVim.onInstanceChanged = () => cb(VSCVim.instance)
+  }
 }
+
+VSCVim.getInstance(i => new Tests(i))
