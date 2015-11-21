@@ -1,5 +1,7 @@
 // TODO
 // * Fix errors when text actions (hjkl etc) go off side of screen
+// * Need to start thinking about visual mode immediately
+  // * Making way too many assumptions about selections currently, only gonna get worse.
 
 import * as vscode from 'vscode'; 
 
@@ -110,6 +112,17 @@ class VimAction_c extends VimAction {
 	}
 }
 
+class VimAction_w extends VimAction {
+	modes = [VimMode.Normal];
+	key = "w";
+	
+	runAction(state: VimState): VimState {
+		return clone(state, {
+			textAction: new TextMotionWord({ forward: true })
+		});
+	}
+}
+
 class Keys {
 	public static actions: VimAction[] = [
 		new VimAction_i(),
@@ -118,6 +131,7 @@ class Keys {
 		new VimAction_j(),
 		new VimAction_k(),
 		new VimAction_d(),
+    new VimAction_w(),
 		new VimAction_escape()
 	];
 	
@@ -234,6 +248,10 @@ interface VimState {
 }
 
 interface TextMotion {
+  /**
+   * Runs this text motion, returning a selection indicating where the
+   * text motion is now located.
+   */
 	runTextMotion(): vscode.Selection;
 }
 
@@ -266,6 +284,44 @@ class TextMotionMovement implements TextMotion {
 			return new vscode.Selection(start, end)
 		}
 	}
+}
+
+class TextMotionWord implements TextMotion {
+  private _forward: boolean;
+  
+  private static wordDelimiters = " ";
+  
+  private static isDelimiter(char: string): boolean {
+    return TextMotionWord.wordDelimiters.indexOf(char) !== -1;
+  }
+  
+  constructor(params: { forward: boolean }) {
+    this._forward = params.forward;
+  }
+  
+  runTextMotion(): vscode.Selection {
+    const editor      = vscode.window.activeTextEditor;
+    const beginning   = editor.selection.start;
+    
+    const line        = editor.document.lineAt(beginning.line).text
+    const startIndex  = beginning.character;
+    let i;
+    let seenDelimiter = false;
+    
+    for (i = startIndex; i < line.length; i++) {
+      if (TextMotionWord.isDelimiter(line[i])) { 
+        seenDelimiter = true; 
+        continue;
+      }
+      
+      if (seenDelimiter) {
+        break;
+      }
+    }
+
+    return new vscode.Selection(new vscode.Position(beginning.line, i), 
+                                new vscode.Position(beginning.line, i));
+  }
 }
 
 class VimOperator {

@@ -21,6 +21,7 @@
 			{ "command": "extension.press_l",      "key": "l" },
       { "command": "extension.press_j",      "key": "j" }, 
       { "command": "extension.press_k",      "key": "k" },  
+      { "command": "extension.press_w",      "key": "w" },  
 			{ "command": "extension.press_d",      "key": "d" }, 
 			{ "command": "extension.press_c",      "key": "c" } 
         ],
