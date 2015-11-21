@@ -1,15 +1,17 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+// TODO
+// * Fix errors when text actions (hjkl etc) go off side of screen
+
 import * as vscode from 'vscode'; 
 
 class VimAction {
 	public modes: VimMode[];
 	public key: string;
+  public insertsKey: string;
 	
 	constructor() {	}
 	
 	doesActionApply(state: VimState): boolean {
-		if (this.modes.indexOf(state.mode) === -1)         return false;
+		if (this.modes.indexOf(state.mode) === -1)        return false;
 		if (this.key.indexOf(state.mostRecentKey) === -1) return false;
 		
 		return true;
@@ -20,7 +22,7 @@ class VimAction {
 	}
 }
 
-class VimActionH extends VimAction {
+class VimAction_h extends VimAction {
 	modes = [VimMode.Normal];
 	key  = "h";
 	
@@ -31,7 +33,7 @@ class VimActionH extends VimAction {
 	}
 }
 
-class VimActionL extends VimAction {
+class VimAction_l extends VimAction {
 	modes = [VimMode.Normal];
 	key  = "l";
 	
@@ -42,7 +44,29 @@ class VimActionL extends VimAction {
 	}
 }
 
-class VimActionI extends VimAction {
+class VimAction_j extends VimAction {
+	modes = [VimMode.Normal];
+	key  = "j";
+	
+	runAction(state: VimState): VimState {
+		return clone(state, {
+			textAction: new TextMotionMovement(MovementDirection.Down, 1)
+		});
+	}
+}
+
+class VimAction_k extends VimAction {
+	modes = [VimMode.Normal];
+	key  = "k";
+	
+	runAction(state: VimState): VimState {
+		return clone(state, {
+			textAction: new TextMotionMovement(MovementDirection.Up, 1)
+		});
+	}
+}
+
+class VimAction_i extends VimAction {
 	modes = [VimMode.Normal];
 	key  = "i";
 	
@@ -53,7 +77,7 @@ class VimActionI extends VimAction {
 	}
 }
 
-class VimActionEscape extends VimAction {
+class VimAction_escape extends VimAction {
 	modes = [VimMode.Insert];
 	key  = "escape";
 	
@@ -64,7 +88,7 @@ class VimActionEscape extends VimAction {
 	}
 }
 
-class VimActionD extends VimAction {
+class VimAction_d extends VimAction {
 	modes = [VimMode.Normal];
 	key = "d";
 	
@@ -75,7 +99,7 @@ class VimActionD extends VimAction {
 	}
 }
 
-class VimActionC extends VimAction {
+class VimAction_c extends VimAction {
 	modes = [VimMode.Normal];
 	key = "c";
 	
@@ -88,11 +112,13 @@ class VimActionC extends VimAction {
 
 class Keys {
 	public static actions: VimAction[] = [
-		new VimActionI(),
-		new VimActionH(),
-		new VimActionL(),
-		new VimActionD(),
-		new VimActionEscape()
+		new VimAction_i(),
+		new VimAction_h(),
+		new VimAction_l(),
+		new VimAction_j(),
+		new VimAction_k(),
+		new VimAction_d(),
+		new VimAction_escape()
 	];
 	
 	public static keyNames(): string[] {
@@ -208,7 +234,7 @@ interface VimState {
 }
 
 interface TextMotion {
-	runTextAction(): vscode.Selection;
+	runTextMotion(): vscode.Selection;
 }
 
 class TextMotionMovement implements TextMotion {
@@ -220,17 +246,25 @@ class TextMotionMovement implements TextMotion {
 		this._amount = amount;
 	}
 	
-	runTextAction(): vscode.Selection {
+	runTextMotion(): vscode.Selection {
 		const editor = vscode.window.activeTextEditor; 
+		const pos    = editor.selection.start;
 		
-		const pos = editor.selection.start;
-		
-		const delta = this._direction === MovementDirection.Left ? -1 : 1;
-		
-		const start = new vscode.Position(pos.line, pos.character + delta);
-		const end   = new vscode.Position(pos.line, pos.character + delta);
-		
-		return new vscode.Selection(start, end)
+		if (this._direction === MovementDirection.Left || this._direction === MovementDirection.Right) {
+			const delta = this._direction === MovementDirection.Left ? -1 : 1;
+			
+			const start = new vscode.Position(pos.line, pos.character + delta);
+			const end   = new vscode.Position(pos.line, pos.character + delta);
+			
+			return new vscode.Selection(start, end)
+		} else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
+			const delta = this._direction === MovementDirection.Up ? -1 : 1;
+			
+			const start = new vscode.Position(pos.line + delta, pos.character);
+			const end   = new vscode.Position(pos.line + delta, pos.character);
+			
+			return new vscode.Selection(start, end)
+		}
 	}
 }
 
@@ -333,7 +367,7 @@ class Vim {
 			});
 		} else {
 			if (newState.textAction) {
-				const newPosition = newState.textAction.runTextAction().start;
+				const newPosition = newState.textAction.runTextMotion().start;
 				const oldPosition = vscode.window.activeTextEditor.selection.start;
 				
 				newState.command.runOperator(newState, oldPosition, newPosition);

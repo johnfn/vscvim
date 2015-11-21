@@ -14,25 +14,16 @@
 	],
 	"main": "./out/src/extension",
 	"contributes": {
-		"keybindings": [{
-			"command": "extension.press_i",
-			"key": "i"
-		}, {
-			"command": "extension.press_escape",
-			"key": "escape"
-		}, {
-			"command": "extension.press_h",
-			"key": "h"
-		}, {
-			"command": "extension.press_l",
-			"key": "l"
-		}, {
-			"command": "extension.press_d",
-			"key": "d"
-		}, {
-			"command": "extension.press_c",
-			"key": "c"
-		} ],
+		"keybindings": [
+			{ "command": "extension.press_i",      "key": "i" }, 
+			{ "command": "extension.press_escape", "key": "escape" }, 
+			{ "command": "extension.press_h",      "key": "h" }, 
+			{ "command": "extension.press_l",      "key": "l" },
+      { "command": "extension.press_j",      "key": "j" }, 
+      { "command": "extension.press_k",      "key": "k" },  
+			{ "command": "extension.press_d",      "key": "d" }, 
+			{ "command": "extension.press_c",      "key": "c" } 
+        ],
 		"commands": [{
 			"command": "extension.sayHello",
 			"title": "Hello World"
