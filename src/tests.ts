@@ -104,15 +104,20 @@ class TestHarness {
     if (a instanceof Position) {
       // TODO: How come type guards don't work? 
       passes = (<Position> <any> a).isEqual(<Position> <any> b)
+      
+      if (!passes) {
+        this._testState.messages.push(`${JSON.stringify(a)} is not equal to ${JSON.stringify(b)}`)
+      }
     } else {
       passes = (a === b)
+      
+      this._testState.messages.push(`${a} is not equal to ${b}`)
     }
     
     if (passes) {
       this._testState.passes++
     } else {
       this._testState.fails++
-      this._testState.messages.push(`${a} is not equal to ${b}`)
     }
   }
 }
@@ -125,9 +130,15 @@ export class Tests extends TestHarness {
       return this.setText(`
 THIS IS ONLY
 A TEST.`).then(() => {
+
         v.sendKey("l")
-        
         this.shouldEqual(this.editor.selection.start, new Position(0, 1))
+        
+        v.sendKey("h")
+        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+        
+        v.sendKey("h")
+        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
       })
     })
     

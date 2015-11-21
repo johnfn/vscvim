@@ -282,19 +282,24 @@ class TextMotionMovement implements TextMotion {
 	runTextMotion(): vscode.Selection {
 		const editor = vscode.window.activeTextEditor; 
 		const pos    = editor.selection.start;
+    
+    // 1 + 2 === 2 ? 1 : 77
+    // What would it evaluate to? Go ahead, think about it.
 		
 		if (this._direction === MovementDirection.Left || this._direction === MovementDirection.Right) {
-			const delta = this._direction === MovementDirection.Left ? -1 : 1;
-			
-			const start = new vscode.Position(pos.line, pos.character + delta);
-			const end   = new vscode.Position(pos.line, pos.character + delta);
+			let newchar = pos.character + (this._direction === MovementDirection.Left ? -1 : 1)
+      newchar     = Util.constrain(newchar, 0, editor.document.lineAt(pos.line).text.length)
+      
+			const start = new vscode.Position(pos.line, newchar);
+			const end   = new vscode.Position(pos.line, newchar);
 			
 			return new vscode.Selection(start, end)
 		} else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
-			const delta = this._direction === MovementDirection.Up ? -1 : 1;
+			let newline = pos.line + (this._direction === MovementDirection.Up ? -1 : 1)
+      newline     = Util.constrain(newline, 0, editor.document.lineCount)
 			
-			const start = new vscode.Position(pos.line + delta, pos.character);
-			const end   = new vscode.Position(pos.line + delta, pos.character);
+			const start = new vscode.Position(newline, pos.character);
+			const end   = new vscode.Position(newline, pos.character);
 			
 			return new vscode.Selection(start, end)
 		}
@@ -304,6 +309,16 @@ class TextMotionMovement implements TextMotion {
 type ForEachCharItr = (pos: vscode.Position, char: string, done: () => void) => void
 
 class Util {
+  
+  /**
+   * Constrain val to be within the range of low and high.
+   */
+  public static constrain(val: number, low: number, high: number): number {
+    if (val > high) return high;
+    if (val < low ) return low;
+                    return val;
+  }
+  
   public static get editor(): vscode.TextEditor {
     return vscode.window.activeTextEditor;
   }
