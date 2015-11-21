@@ -97,9 +97,18 @@ class TestHarness {
   }
   
   shouldEqual<T>(a: T, b: T): void {
+    let passes = false;
+    
     this._testState.totalTests++
     
-    if (a === b) {
+    if (a instanceof Position) {
+      // TODO: How come type guards don't work? 
+      passes = (<Position> <any> a).isEqual(<Position> <any> b)
+    } else {
+      passes = (a === b)
+    }
+    
+    if (passes) {
       this._testState.passes++
     } else {
       this._testState.fails++
@@ -115,7 +124,11 @@ export class Tests extends TestHarness {
     this.test("hjkl", () => {
       return this.setText(`
 THIS IS ONLY
-A TEST.`)
+A TEST.`).then(() => {
+        v.sendKey("l")
+        
+        this.shouldEqual(this.editor.selection.start, new Position(0, 1))
+      })
     })
     
     this.runTests()
@@ -129,6 +142,9 @@ A TEST.`)
 REPLACEMENT TEXT STARTS HERE
 FIRST NEWLINE IS IGNORED
 FOR CONVENIENCE.`)
+   *
+   * Always sets the cursor location to (0, 0) when finished.
+   * 
    */
   setText(text: string): PromiseLike<any> {
     const formattedText = text.split("\n").slice(1).join("\n")
@@ -140,6 +156,8 @@ FOR CONVENIENCE.`)
       return this.editor.edit(e => {
         e.insert(new Position(0, 0), formattedText)
       })
+    }).then(res => {
+      this.editor.selections = [new Selection(new Position(0, 0), new Position(0, 0))]
     })
   }
   

@@ -193,7 +193,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const disposables: vscode.Disposable[] = Keys.keyNames().map((key: string) => {
 		return vscode.commands.registerTextEditorCommand(`extension.press_${key}`, () => {	
-			vim.keyWasPressed(key);
+			vim.sendKey(key);
 		});
 	});
 
@@ -530,7 +530,7 @@ export class VSCVim {
 		vscode.window.setStatusBarMessage(status)
 	}
 	
-	keyWasPressed(key: string): void {
+	sendKey(key: string): void {
 		let newState = clone(this.state, {
 			mostRecentKey: key
 		});
