@@ -327,10 +327,8 @@ class Util {
         cb(getCurrentPos(), "\n", done)
         if (stopped) break;
         
+        if (++currentLinePos >= Util.document.lineCount) break;
         currentCharPos = 0;
-        currentLinePos++;
-        
-        if (currentLinePos >= Util.document.lineCount) break;
       }
     }
     
