@@ -32,9 +32,9 @@ class VimAction_h extends VimAction {
 	key  = "h";
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionMovement(MovementDirection.Left, 1)
-		});
+    const newState = clone(state)
+    newState.textAction = new TextMotionMovement(MovementDirection.Left, 1)
+		return newState
 	}
 }
 
@@ -43,9 +43,9 @@ class VimAction_l extends VimAction {
 	key  = "l";
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionMovement(MovementDirection.Right, 1)
-		});
+    const newState = clone(state)
+    newState.textAction = new TextMotionMovement(MovementDirection.Right, 1)
+		return newState
 	}
 }
 
@@ -54,9 +54,9 @@ class VimAction_j extends VimAction {
 	key  = "j";
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionMovement(MovementDirection.Down, 1)
-		});
+    const newState = clone(state)
+    newState.textAction = new TextMotionMovement(MovementDirection.Down, 1)
+		return newState
 	}
 }
 
@@ -65,9 +65,9 @@ class VimAction_k extends VimAction {
 	key  = "k"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionMovement(MovementDirection.Up, 1)
-		})
+    const newState = clone(state)
+    newState.textAction = new TextMotionMovement(MovementDirection.Up, 1)
+		return newState
 	}
 }
 
@@ -76,9 +76,9 @@ class VimAction_i extends VimAction {
 	key  = "i"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			mode: VimMode.Insert
-		})
+    const newState = clone(state)
+    newState.mode = VimMode.Insert
+		return newState
 	}
 }
 
@@ -87,10 +87,10 @@ class VimAction_v extends VimAction {
 	key  = "v"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			mode        : VimMode.Visual,
-      cursorStart : state.cursor
-		})
+    const newState = clone(state)
+    newState.mode        = VimMode.Visual
+    newState.cursorStart = state.cursor
+		return newState
 	}
 }
 
@@ -99,20 +99,20 @@ class VimAction_escape extends VimAction {
 	key  = "escape"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			mode: VimMode.Normal
-		});
+    const newState = clone(state)
+    newState.mode = VimMode.Normal
+		return newState
 	}
 }
 
 class VimAction_d extends VimAction {
-	modes = [VimMode.Normal]
+	modes = [VimMode.Normal, VimMode.Visual]
 	key = "d"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			command: new VimOperatorDelete()
-		});
+    const newState = clone(state)
+    newState.command = new VimOperatorDelete()
+		return newState
 	}
 }
 
@@ -121,9 +121,9 @@ class VimAction_c extends VimAction {
 	key = "c"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			command: new VimOperatorChange()
-		})
+    const newState = clone(state)
+    newState.command = new VimOperatorChange()
+		return newState
 	}
 }
 
@@ -132,10 +132,10 @@ class VimAction_w extends VimAction {
 	key = "w"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionWord({ forward: true })
-		})
-	}
+    const newState = clone(state)
+    newState.textAction = new TextMotionWord({ forward: true })
+		return newState
+  }
 }
 
 class VimAction_b extends VimAction {
@@ -143,9 +143,9 @@ class VimAction_b extends VimAction {
 	key = "b"
 
 	runAction(state: VimState): VimState {
-		return clone(state, {
-			textAction: new TextMotionWord({ forward: false })
-		})
+    const newState = clone(state)
+    newState.textAction = new TextMotionWord({ forward: false })
+		return newState
 	}
 }
 
@@ -217,7 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
 /**
   Clone obj, optionally copying over key value pairs from props onto obj.
 */
-function clone<T>(obj: T, props: any = {}): T {
+function clone<T>(obj: T): T {
   if(obj === null || typeof(obj) !== 'object' || 'isActiveClone' in obj)
     return obj;
 
@@ -226,13 +226,9 @@ function clone<T>(obj: T, props: any = {}): T {
   for (var key in obj) {
     if(Object.prototype.hasOwnProperty.call(obj, key)) {
       (obj as any)['isActiveClone'] = null;
-      (result as any)[key] = clone((obj as any)[key], {});
+      (result as any)[key] = clone((obj as any)[key]);
       delete (obj as any)['isActiveClone'];
     }
-  }
-
-  for (var key in props) {
-    (result as any)[key] = props[key];
   }
 
   if (result && obj) {
@@ -539,9 +535,9 @@ class VimOperatorChange implements VimOperator {
 			e.delete(range);
 		});
 
-		return clone(state, {
-			mode: VimMode.Insert
-		});
+    const newState = clone(state)
+    newState.mode = VimMode.Insert
+		return newState
 	}
 }
 
@@ -576,9 +572,9 @@ export class VSCVim {
 	}
 
 	sendKey(key: string): void {
-		let newState = clone(this.state, {
-			mostRecentKey: key
-		})
+		let newState = clone(this.state)
+    newState.mostRecentKey = key
+
 		let didKeyApply = false
 		const editor = vscode.window.activeTextEditor
 
@@ -612,47 +608,45 @@ export class VSCVim {
         });
       }
 		} else {
-			if (newState.textAction) {
-        if (newState.mode === VimMode.Normal) {
+      if (newState.mode === VimMode.Normal && newState.textAction) {
+        const newPosition = newState.textAction.runTextMotion(newState.cursor)
+
+        if (newState.command) {
+          newState.command.runOperator(newState, newState.cursor, newPosition)
+        } else {
+          newState.cursor = newPosition
+        }
+
+        // Clear out vim state
+
+        newState.textAction = null
+        newState.command    = null
+      }
+
+      if (newState.mode === VimMode.Visual) {
+        if (newState.textAction) {
           const newPosition = newState.textAction.runTextMotion(newState.cursor)
-
-          if (newState.command) {
-            newState.command.runOperator(newState, newState.cursor, newPosition)
-          } else {
-            newState.cursor = newPosition
-          }
-
-          // Clear out vim state
-
-          newState.textAction = null
-          newState.command    = null
+          newState.cursor = newPosition
         }
 
-        if (newState.mode === VimMode.Visual) {
-          if (newState.textAction) {
-            const newPosition = newState.textAction.runTextMotion(newState.cursor)
-            newState.cursor = newPosition
-          }
-
-          if (newState.command) {
-            newState.command.runOperator(newState, newState.cursorStart, newState.cursor)
-          }
-
-          newState.textAction = null
-          newState.command    = null
+        if (newState.command) {
+          newState.command.runOperator(newState, newState.cursorStart, newState.cursor)
         }
 
-        // Operations done. Keep the editor in sync with the state.
+        newState.textAction = null
+        newState.command    = null
+      }
 
-        if (newState.mode === VimMode.Normal) {
-          editor.selection = new vscode.Selection(newState.cursor, newState.cursor)
-        }
+      // Operations done. Keep the editor in sync with the state.
 
-        if (newState.mode === VimMode.Visual) {
-          editor.selection = new vscode.Selection(newState.cursorStart, newState.cursor)
-        }
-			}
-		}
+      if (newState.mode === VimMode.Normal) {
+        editor.selection = new vscode.Selection(newState.cursor, newState.cursor)
+      }
+
+      if (newState.mode === VimMode.Visual) {
+        editor.selection = new vscode.Selection(newState.cursorStart, newState.cursor)
+      }
+    }
 
 
 		this.state = newState;
