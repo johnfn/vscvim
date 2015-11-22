@@ -631,6 +631,9 @@ export class VSCVim {
 
         if (newState.command) {
           newState.command.runOperator(newState, newState.cursorStart, newState.cursor)
+          newState.mode = VimMode.Normal
+
+          newState.cursor = newState.cursorStart
         }
 
         newState.textAction = null
