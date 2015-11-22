@@ -222,6 +222,18 @@ TEST`).then(() => {
       })
     })
 
+    this.test("dw", () => {
+      return this.setText(`
+abde efg hgi
+
+jklm`).then(() => {
+        v.sendKey("d")
+        v.sendKey("w")
+
+        this.shouldEqual(this.document.getText(), `efg hgi\n\njklm`)
+      })
+    })
+
     this.runTests()
   }
 

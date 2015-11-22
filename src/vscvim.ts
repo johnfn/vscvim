@@ -1,7 +1,4 @@
 // TODO
-// * Fix errors when text actions (hjkl etc) go off side of screen
-// * Need to start thinking about visual mode immediately
-//   * Making way too many assumptions about selections currently, only gonna get worse.
 // * The other hard thing I should start thinking about is .
 //   * Should not actually be _too_ hard since I could just save a reference to the previous state.
 //   * (And macros could be done by saving all states)
@@ -48,6 +45,12 @@ class VimAction_l extends VimAction {
     return newState
   }
 }
+
+const test = function*() {
+  console.log("yay")
+}
+
+test()
 
 class VimAction_j extends VimAction {
   modes = [VimMode.Normal, VimMode.Visual];
@@ -180,30 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   VSCVim.getInstance(i => new Tests(i))
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with  registerCommand
-  // The commandId parameter must match the command field in package.json
-  /*
-  const disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-    // The code you place here will be executed every time your command is executed
-
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-
-    const selection = editor.selection;
-    const text = editor.document.getText(selection)
-
-    vscode.window.showInformationMessage("Selected: " + text);
-
-    // Display a message box to the user
-    vscode.window.showInformationMessage('Hello World!');
-  });
-  */
-
   const vim = new VSCVim();
-
 
   const disposables: vscode.Disposable[] = Keys.keyNames().map((key: string) => {
     return vscode.commands.registerTextEditorCommand(`extension.press_${key}`, () => {
