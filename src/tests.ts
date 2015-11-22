@@ -29,8 +29,19 @@ interface Test {
 
 
 class TestHarness {
+  /**
+   * Every test.
+   */
   private _tests: Test[] = []
+
+  /**
+   * State of the active test.
+   */
   private _testState: IndividualTestResults
+
+  /**
+   * Summary state of all tests.
+   */
   private _overallTestState: OverallTestResults = {
     totalTests             : 0,
     passes                 : 0,
@@ -98,6 +109,7 @@ class TestHarness {
 
   shouldEqual<T>(a: T, b: T): void {
     let passes = false;
+    let message = ""
 
     this._testState.totalTests++
 
@@ -106,18 +118,21 @@ class TestHarness {
       passes = (<Position> <any> a).isEqual(<Position> <any> b)
 
       if (!passes) {
-        this._testState.messages.push(`${JSON.stringify(a)} is not equal to ${JSON.stringify(b)}`)
+        message = `${JSON.stringify(a)} is not equal to ${JSON.stringify(b)}`
       }
     } else {
       passes = (a === b)
 
-      this._testState.messages.push(`${a} is not equal to ${b}`)
+      message = `${a} is not equal to ${b}`
     }
 
     if (passes) {
       this._testState.passes++
     } else {
+      const stackTrace = new Error().stack.split("\n").slice(2).join("\n")
       this._testState.fails++
+
+      this._testState.messages.push(message + "\n" + stackTrace)
     }
   }
 }
