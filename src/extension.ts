@@ -10,208 +10,208 @@ import * as vscode from 'vscode';
 import { Tests } from "./tests"
 
 class VimAction {
-	public modes: VimMode[]
-	public key: string
+  public modes: VimMode[]
+  public key: string
 
-	constructor() {	}
+  constructor() {  }
 
-	doesActionApply(state: VimState, key: string): boolean {
-		if (this.modes.indexOf(state.mode) === -1) return false;
-		if (this.key.indexOf(key) === -1)          return false;
+  doesActionApply(state: VimState, key: string): boolean {
+    if (this.modes.indexOf(state.mode) === -1) return false;
+    if (this.key.indexOf(key) === -1)          return false;
 
-		return true;
-	}
+    return true;
+  }
 
-	runAction(state: VimState): VimState {
-		throw new Error("No action to run.");
-	}
+  runAction(state: VimState): VimState {
+    throw new Error("No action to run.");
+  }
 }
 
 class VimAction_h extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual];
-	key  = "h";
+  modes = [VimMode.Normal, VimMode.Visual];
+  key  = "h";
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionMovement(MovementDirection.Left, 1)
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_l extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual];
-	key  = "l";
+  modes = [VimMode.Normal, VimMode.Visual];
+  key  = "l";
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionMovement(MovementDirection.Right, 1)
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_j extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual];
-	key  = "j";
+  modes = [VimMode.Normal, VimMode.Visual];
+  key  = "j";
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionMovement(MovementDirection.Down, 1)
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_k extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual]
-	key  = "k"
+  modes = [VimMode.Normal, VimMode.Visual]
+  key  = "k"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionMovement(MovementDirection.Up, 1)
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_i extends VimAction {
-	modes = [VimMode.Normal]
-	key  = "i"
+  modes = [VimMode.Normal]
+  key  = "i"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.mode = VimMode.Insert
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_v extends VimAction {
-	modes = [VimMode.Normal]
-	key  = "v"
+  modes = [VimMode.Normal]
+  key  = "v"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.mode        = VimMode.Visual
     newState.cursorStart = state.cursor
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_escape extends VimAction {
-	modes = [VimMode.Insert, VimMode.Visual]
-	key  = "escape"
+  modes = [VimMode.Insert, VimMode.Visual]
+  key  = "escape"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.mode = VimMode.Normal
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_d extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual]
-	key = "d"
+  modes = [VimMode.Normal, VimMode.Visual]
+  key = "d"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.command = new VimOperatorDelete()
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_c extends VimAction {
-	modes = [VimMode.Normal]
-	key = "c"
+  modes = [VimMode.Normal]
+  key = "c"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.command = new VimOperatorChange()
-		return newState
-	}
+    return newState
+  }
 }
 
 class VimAction_w extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual]
-	key = "w"
+  modes = [VimMode.Normal, VimMode.Visual]
+  key = "w"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionWord({ forward: true })
-		return newState
+    return newState
   }
 }
 
 class VimAction_b extends VimAction {
-	modes = [VimMode.Normal, VimMode.Visual]
-	key = "b"
+  modes = [VimMode.Normal, VimMode.Visual]
+  key = "b"
 
-	runAction(state: VimState): VimState {
+  runAction(state: VimState): VimState {
     const newState = clone(state)
     newState.textAction = new TextMotionWord({ forward: false })
-		return newState
-	}
+    return newState
+  }
 }
 
 class Keys {
 
   // TODO: Use a decorator rather than being literally idiotic
-	public static actions: VimAction[] = [
-		new VimAction_i(),
-		new VimAction_h(),
-		new VimAction_l(),
-		new VimAction_j(),
-		new VimAction_k(),
-		new VimAction_d(),
+  public static actions: VimAction[] = [
+    new VimAction_i(),
+    new VimAction_h(),
+    new VimAction_l(),
+    new VimAction_j(),
+    new VimAction_k(),
+    new VimAction_d(),
     new VimAction_w(),
     new VimAction_b(),
     new VimAction_v(),
-		new VimAction_escape()
-	];
+    new VimAction_escape()
+  ];
 
-	public static keyNames(): string[] {
-		return Keys.actions.map(action => action.key);
-	}
+  public static keyNames(): string[] {
+    return Keys.actions.map(action => action.key);
+  }
 }
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "vscvim" is now active!');
+  // Use the console to output diagnostic information (console.log) and errors (console.error)
+  // This line of code will only be executed once when your extension is activated
+  console.log('Congratulations, your extension "vscvim" is now active!');
 
-	VSCVim.getInstance(i => new Tests(i))
+  VSCVim.getInstance(i => new Tests(i))
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	/*
-	const disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-		// The code you place here will be executed every time your command is executed
+  // The command has been defined in the package.json file
+  // Now provide the implementation of the command with  registerCommand
+  // The commandId parameter must match the command field in package.json
+  /*
+  const disposable = vscode.commands.registerCommand('extension.sayHello', () => {
+    // The code you place here will be executed every time your command is executed
 
-		const editor = vscode.window.activeTextEditor;
-		if (!editor) {
-			return;
-		}
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
 
-		const selection = editor.selection;
-		const text = editor.document.getText(selection)
+    const selection = editor.selection;
+    const text = editor.document.getText(selection)
 
-		vscode.window.showInformationMessage("Selected: " + text);
+    vscode.window.showInformationMessage("Selected: " + text);
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World!');
-	});
-	*/
+    // Display a message box to the user
+    vscode.window.showInformationMessage('Hello World!');
+  });
+  */
 
-	const vim = new VSCVim();
+  const vim = new VSCVim();
 
 
-	const disposables: vscode.Disposable[] = Keys.keyNames().map((key: string) => {
-		return vscode.commands.registerTextEditorCommand(`extension.press_${key}`, () => {
-			vim.sendKey(key);
-		});
-	});
+  const disposables: vscode.Disposable[] = Keys.keyNames().map((key: string) => {
+    return vscode.commands.registerTextEditorCommand(`extension.press_${key}`, () => {
+      vim.sendKey(key);
+    });
+  });
 
-	// context.subscriptions.push(disposable);
+  // context.subscriptions.push(disposable);
 }
 
 /**
@@ -232,59 +232,59 @@ function clone<T>(obj: T): T {
   }
 
   if (result && obj) {
-	  Object.setPrototypeOf(result, Object.getPrototypeOf(obj));
+    Object.setPrototypeOf(result, Object.getPrototypeOf(obj));
   }
 
   return result;
 }
 
 const enum VimMode {
-	Normal,
-	Insert,
-	Visual,
-	VisualLine,
-	VisualBlock
+  Normal,
+  Insert,
+  Visual,
+  VisualLine,
+  VisualBlock
 }
 
 /*
 const enum VimCommand {
-	Yank,
-	Delete,
-	Change,
-	Indent,
-	Unindent,
-	AutoFormat,
-	None
+  Yank,
+  Delete,
+  Change,
+  Indent,
+  Unindent,
+  AutoFormat,
+  None
 }
 */
 
 const enum MovementDirection {
-	Up,
-	Down,
-	Left,
-	Right
+  Up,
+  Down,
+  Left,
+  Right
 }
 
 interface VimState {
   /**
    * Which mode we're in.
    */
-	mode          : VimMode;
+  mode          : VimMode;
 
   /**
    * Which operator we're going to apply (e.g. change, delete, indent left)
    */
-	command       : VimOperator;
+  command       : VimOperator;
 
   /**
    * The most recent key pressed. (TODO: Not sure if this is necessary).
    */
-	mostRecentKey : string;
+  mostRecentKey : string;
 
   /**
    * The text action we're going to apply - will create a new location for the cursor.
    */
-	textAction    : TextMotion;
+  textAction    : TextMotion;
 
   /**
    * The location of the cursor.
@@ -302,36 +302,36 @@ interface TextMotion {
    * Runs this text motion, returning a position indicating where the
    * text motion is now located.
    */
-	runTextMotion(pos: vscode.Position): vscode.Position;
+  runTextMotion(pos: vscode.Position): vscode.Position;
 }
 
 class TextMotionMovement implements TextMotion {
-	private _direction: MovementDirection;
-	private _amount: number;
+  private _direction: MovementDirection;
+  private _amount: number;
 
-	constructor(direction: MovementDirection, amount: number) {
-		this._direction = direction;
-		this._amount = amount;
-	}
+  constructor(direction: MovementDirection, amount: number) {
+    this._direction = direction;
+    this._amount = amount;
+  }
 
-	runTextMotion(pos: vscode.Position): vscode.Position {
-		const editor = vscode.window.activeTextEditor;
+  runTextMotion(pos: vscode.Position): vscode.Position {
+    const editor = vscode.window.activeTextEditor;
 
     // 1 + 2 === 2 ? 1 : 77
     // What would it evaluate to? Go ahead, think about it.
 
-		if (this._direction === MovementDirection.Left || this._direction === MovementDirection.Right) {
-			let newchar = pos.character + (this._direction === MovementDirection.Left ? -1 : 1)
+    if (this._direction === MovementDirection.Left || this._direction === MovementDirection.Right) {
+      let newchar = pos.character + (this._direction === MovementDirection.Left ? -1 : 1)
       newchar     = Util.constrain(newchar, 0, editor.document.lineAt(pos.line).text.length - 1)
 
-			return new vscode.Position(pos.line, newchar)
-		} else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
-			let newline = pos.line + (this._direction === MovementDirection.Up ? -1 : 1)
+      return new vscode.Position(pos.line, newchar)
+    } else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
+      let newline = pos.line + (this._direction === MovementDirection.Up ? -1 : 1)
       newline     = Util.constrain(newline, 0, editor.document.lineCount - 1)
 
-			return new vscode.Position(newline, pos.character)
-		}
-	}
+      return new vscode.Position(newline, pos.character)
+    }
+  }
 }
 
 type ForEachCharItr = (pos: vscode.Position, char: string, done: () => void) => void
@@ -504,72 +504,72 @@ class TextMotionWord implements TextMotion {
 }
 
 class VimOperator {
-	constructor() {
+  constructor() {
 
-	}
+  }
 
-	runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
-		throw "unimplemented";
-	}
+  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+    throw "unimplemented";
+  }
 }
 
 class VimOperatorDelete implements VimOperator {
-	runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
-		const editor = vscode.window.activeTextEditor;
-		const range  = new vscode.Range(start, end);
+  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+    const editor = vscode.window.activeTextEditor;
+    const range  = new vscode.Range(start, end);
 
-		editor.edit((e: vscode.TextEditorEdit) => {
-			e.delete(range);
-		});
+    editor.edit((e: vscode.TextEditorEdit) => {
+      e.delete(range);
+    });
 
-		return state;
-	}
+    return state;
+  }
 }
 
 class VimOperatorChange implements VimOperator {
-	runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
-		const editor = vscode.window.activeTextEditor;
-		const range  = new vscode.Range(start, end);
+  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+    const editor = vscode.window.activeTextEditor;
+    const range  = new vscode.Range(start, end);
 
-		editor.edit((e: vscode.TextEditorEdit) => {
-			e.delete(range);
-		});
+    editor.edit((e: vscode.TextEditorEdit) => {
+      e.delete(range);
+    });
 
     const newState = clone(state)
     newState.mode = VimMode.Insert
-		return newState
-	}
+    return newState
+  }
 }
 
 export class VSCVim {
-	state: VimState;
+  state: VimState;
 
-	constructor() {
-		this.state = {
-			mode          : VimMode.Normal,
-			mostRecentKey : "",
-			textAction    : null,
+  constructor() {
+    this.state = {
+      mode          : VimMode.Normal,
+      mostRecentKey : "",
+      textAction    : null,
       cursor        : vscode.window.activeTextEditor.selection.start,
       cursorStart   : null,
-			command       : null // TODO: Use Maybe<T>?
-		}
+      command       : null // TODO: Use Maybe<T>?
+    }
 
     VSCVim.instance = this
     if (VSCVim.onInstanceChanged) VSCVim.onInstanceChanged()
-	}
+  }
 
-	private updateStatusBar(state: VimState): void {
-		let status: string;
+  private updateStatusBar(state: VimState): void {
+    let status: string;
 
-		switch (state.mode) {
-			case VimMode.Insert: status = "INSERT MODE"; break
-			case VimMode.Normal: status = "NORMAL MODE"; break
+    switch (state.mode) {
+      case VimMode.Insert: status = "INSERT MODE"; break
+      case VimMode.Normal: status = "NORMAL MODE"; break
       case VimMode.Visual: status = "VISUAL MODE"; break
-			default:             status = "??? MODE";    break
-		}
+      default:             status = "??? MODE";    break
+    }
 
-		vscode.window.setStatusBarMessage(status)
-	}
+    vscode.window.setStatusBarMessage(status)
+  }
 
   private showErrorMessage(msg: string): void {
     vscode.window.showErrorMessage(`[VSCVim]: ${msg}`)
@@ -595,17 +595,17 @@ export class VSCVim {
     let newState    = state
     let didKeyApply = false
 
-		for (const action of Keys.actions) {
-			if (action.doesActionApply(newState, key)) {
-				if (didKeyApply) {
-					this.showErrorMessage("[VSCVIM ERROR] More than 1 key applied");
-				}
+    for (const action of Keys.actions) {
+      if (action.doesActionApply(newState, key)) {
+        if (didKeyApply) {
+          this.showErrorMessage("[VSCVIM ERROR] More than 1 key applied");
+        }
 
-				newState = action.runAction(newState);
+        newState = action.runAction(newState);
 
-				didKeyApply = true;
-			}
-		}
+        didKeyApply = true;
+      }
+    }
 
     return [newState, didKeyApply]
   }
@@ -663,17 +663,17 @@ export class VSCVim {
    * The method that starts it all in VSCVim. Given a keystroke input,
    * updates the inner state and, if necessary, the editor accordingly.
    */
-	sendKey(key: string): void {
+  sendKey(key: string): void {
     const editor = vscode.window.activeTextEditor
 
     this.runSanityChecks(this.state)
 
     const [newState, didKeyApply] = this.applyKeystrokeToState(this.state, key)
 
-		if (!didKeyApply) {
+    if (!didKeyApply) {
       this.giganticHackForUnusedKeys(key)
       return
-		}
+    }
 
     let couldRunState = false
 
@@ -701,8 +701,8 @@ export class VSCVim {
 
     this.updateStatusBar(newState)
 
-		this.state = newState;
-	}
+    this.state = newState;
+  }
 
   /**
    * Given a position p which might have a character field past the
@@ -712,7 +712,7 @@ export class VSCVim {
    */
   private truncatePosition(p: vscode.Position): vscode.Position {
     let newPosition = p
-		const editor = vscode.window.activeTextEditor
+    const editor = vscode.window.activeTextEditor
 
     if (p.character > editor.document.lineAt(p.line).text.length) {
       const newCh = editor.document.lineAt(p.line).text.length
