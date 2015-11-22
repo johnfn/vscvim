@@ -343,7 +343,8 @@ class Util {
     const done      = () => stopped = true
 
     let currentPos  = startPosition
-    let currentChar = () => Util.document.lineAt(currentPos.line).text[currentPos.character]
+    let currentLine = () => Util.document.lineAt(currentPos.line).text
+    let currentChar = () => currentLine()[currentPos.character]
 
     while (true) {
       let previousPos = currentPos
@@ -353,7 +354,10 @@ class Util {
       if (stopped) break
 
       currentPos = forward ? Util.nextPosition(currentPos) : Util.prevPosition(currentPos)
-      if (currentPos.character === 0) {
+
+      // Did we just iterate over a newline?
+      if ((forward  && currentPos.character === 0) ||
+          (!forward && currentPos.character === currentLine().length)) {
         cb(currentPos, "\n", done)
 
         if (stopped) break;
@@ -437,10 +441,11 @@ class TextMotionWord implements TextMotion {
 
   runTextMotion(): vscode.Selection {
     const editor        = vscode.window.activeTextEditor
-    let   seenDelimiter = false
     let nextWordPosition;
 
     if (this._forward) {
+      let   seenDelimiter = false
+
       nextWordPosition = Util.forEachChar((pos, char, done) => {
         if (TextMotionWord.isDelimiter(char)) {
           seenDelimiter = true
