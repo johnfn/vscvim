@@ -29,7 +29,7 @@ class VimAction {
 }
 
 class VimAction_h extends VimAction {
-	modes = [VimMode.Normal];
+	modes = [VimMode.Normal, VimMode.Visual];
 	key  = "h";
 
 	runAction(state: VimState): VimState {
@@ -40,7 +40,7 @@ class VimAction_h extends VimAction {
 }
 
 class VimAction_l extends VimAction {
-	modes = [VimMode.Normal];
+	modes = [VimMode.Normal, VimMode.Visual];
 	key  = "l";
 
 	runAction(state: VimState): VimState {
@@ -51,7 +51,7 @@ class VimAction_l extends VimAction {
 }
 
 class VimAction_j extends VimAction {
-	modes = [VimMode.Normal];
+	modes = [VimMode.Normal, VimMode.Visual];
 	key  = "j";
 
 	runAction(state: VimState): VimState {
@@ -62,7 +62,7 @@ class VimAction_j extends VimAction {
 }
 
 class VimAction_k extends VimAction {
-	modes = [VimMode.Normal]
+	modes = [VimMode.Normal, VimMode.Visual]
 	key  = "k"
 
 	runAction(state: VimState): VimState {
@@ -89,7 +89,8 @@ class VimAction_v extends VimAction {
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
-			mode: VimMode.Visual
+			mode      : VimMode.Visual,
+      cursorEnd : state.cursor
 		})
 	}
 }
@@ -150,6 +151,8 @@ class VimAction_b extends VimAction {
 }
 
 class Keys {
+
+  // TODO: Use a decorator rather than being literally idiotic
 	public static actions: VimAction[] = [
 		new VimAction_i(),
 		new VimAction_h(),
@@ -159,6 +162,7 @@ class Keys {
 		new VimAction_d(),
     new VimAction_w(),
     new VimAction_b(),
+    new VimAction_v(),
 		new VimAction_escape()
 	];
 
@@ -304,7 +308,7 @@ interface TextMotion {
    * Runs this text motion, returning a position indicating where the
    * text motion is now located.
    */
-	runTextMotion(): vscode.Position;
+	runTextMotion(pos: vscode.Position): vscode.Position;
 }
 
 class TextMotionMovement implements TextMotion {
@@ -316,9 +320,8 @@ class TextMotionMovement implements TextMotion {
 		this._amount = amount;
 	}
 
-	runTextMotion(): vscode.Position {
+	runTextMotion(pos: vscode.Position): vscode.Position {
 		const editor = vscode.window.activeTextEditor;
-		const pos    = editor.selection.start;
 
     // 1 + 2 === 2 ? 1 : 77
     // What would it evaluate to? Go ahead, think about it.
@@ -367,9 +370,10 @@ class Util {
    * @param startPosition The position to start iterating from (or the current editor's position if null).
    *
    */
-  public static forEachChar(cb: ForEachCharItr,
-                            startPosition: vscode.Position = Util.editor.selection.start,
-                            forward: boolean = true): vscode.Position {
+  public static forEachChar(cb            : ForEachCharItr,
+                            startPosition : vscode.Position = Util.editor.selection.start,
+                            forward       : boolean         = true)
+                                          : vscode.Position {
     let stopped     = false
     const done      = () => stopped = true
 
@@ -543,17 +547,6 @@ class VimOperatorChange implements VimOperator {
 	}
 }
 
-class VimOperatorMove implements VimOperator {
-	runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
-		const editor = vscode.window.activeTextEditor;
-		const range  = new vscode.Range(start, end);
-
-		editor.selections = [new vscode.Selection(end, end)];
-
-		return state;
-	}
-}
-
 export class VSCVim {
 	state: VimState;
 
@@ -564,7 +557,7 @@ export class VSCVim {
 			textAction    : null,
       cursor        : vscode.window.activeTextEditor.selection.start,
       cursorEnd     : null,
-			command       : new VimOperatorMove()
+			command       : null // TODO: Use Maybe<T>?
 		}
 
     VSCVim.instance = this
@@ -577,6 +570,7 @@ export class VSCVim {
 		switch (this.state.mode) {
 			case VimMode.Insert: status = "INSERT MODE"; break;
 			case VimMode.Normal: status = "NORMAL MODE"; break;
+      case VimMode.Visual: status = "VISUAL MODE"; break;
 			default:             status = "??? MODE";    break;
 		}
 
@@ -608,17 +602,36 @@ export class VSCVim {
 			});
 		} else {
 			if (newState.textAction) {
-				const newPosition = newState.textAction.runTextMotion();
-				const oldPosition = vscode.window.activeTextEditor.selection.start;
+        if (newState.mode === VimMode.Normal) {
+          const newPosition = newState.textAction.runTextMotion(newState.cursor)
 
-				newState.command.runOperator(newState, oldPosition, newPosition);
+          if (newState.command) {
+            newState.command.runOperator(newState, newState.cursor, newPosition)
+          } else {
+            newState.cursor = newPosition
+          }
 
-				// vscode.window.activeTextEditor.selections = [newPosition];
+          // Clear out vim state
 
-				// Clear out vim state
+          newState.textAction = null
+          newState.command    = null
+        }
 
-				newState.textAction = null;
-				newState.command = new VimOperatorMove();
+        if (newState.mode === VimMode.Visual) {
+          const newPosition = newState.textAction.runTextMotion(newState.cursor)
+
+          newState.cursor = newPosition
+        }
+
+        // Operations done. Keep the editor in sync with the state.
+
+        if (newState.mode === VimMode.Normal) {
+          editor.selection = new vscode.Selection(newState.cursor, newState.cursor)
+        }
+
+        if (newState.mode === VimMode.Visual) {
+          editor.selection = new vscode.Selection(newState.cursor, newState.cursorEnd)
+        }
 			}
 		}
 
