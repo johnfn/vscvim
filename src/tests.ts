@@ -138,8 +138,12 @@ class TestHarness {
 }
 
 export class Tests extends TestHarness {
+  private v: VSCVim;
+
   constructor(v: VSCVim) {
     super()
+
+    this.v = v;
 
     this.test("hjkl motions", () => {
       return this.setText(`
@@ -233,6 +237,7 @@ TEST`).then(() => {
    */
   resetSelection(): void {
     this.editor.selection = new Selection(new Position(0, 0), new Position(0, 0))
+    this.v.resetCursor()
   }
 
   /**

@@ -584,6 +584,12 @@ export class VSCVim {
 		let didKeyApply = false;
 		const editor = vscode.window.activeTextEditor;
 
+    // quick sanity check
+
+    if (!newState.cursor.isEqual(editor.selection.start)) {
+      vscode.window.showErrorMessage("DESYNCHRONY BETWEEN CURSOR AND REALITY. CALL THE POLICE IMMEDIATELY")
+    }
+
 		for (const action of Keys.actions) {
 			if (action.doesActionApply(newState)) {
 				if (didKeyApply) {
@@ -653,7 +659,19 @@ export class VSCVim {
    * use it for testing.
    */
   public static getInstance(cb: (i: VSCVim) => void): void {
-    if (VSCVim.instance) cb(VSCVim.instance);
+    if (VSCVim.instance)             cb(VSCVim.instance);
     VSCVim.onInstanceChanged = () => cb(VSCVim.instance)
+  }
+
+  /**
+   * THIS SHOULD ONLY BE USED FOR TESTING.
+   *
+   * Reset cursor back to (0, 0).
+   */
+  public resetCursor(): void {
+    const topleft = new vscode.Position(0, 0)
+
+    this.state.cursor = topleft
+    vscode.window.activeTextEditor.selection = new vscode.Selection(topleft, topleft)
   }
 }
