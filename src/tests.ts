@@ -1,4 +1,4 @@
-import { VSCVim } from "./extension"
+import { VSCVim } from "./vscvim"
 import {
   Selection,
   Position,
