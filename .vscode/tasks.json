@@ -7,6 +7,7 @@
 // ${cwd}: the current working directory of the spawned process
 
 // A task runner that calls a custom npm script that compiles the extension.
+/*
 {
 	"version": "0.1.0",
 
@@ -27,4 +28,18 @@
 
 	// use the standard tsc in watch mode problem matcher to find compile problems in the output.
 	"problemMatcher": "$tsc-watch"
+}*/
+
+{
+    "version": "0.1.0",
+    "command": "gulp",
+    "isShellCommand": true,
+    "tasks": [
+        {
+            "taskName": "default",
+            "isBuildCommand": true,
+            "showOutput": "always",
+            "isWatching": true
+        }
+    ]
 }

@@ -1,4 +1,7 @@
+/// <reference path="../typings/vscode-typings.d.ts" />
+
 // TODO
+// * {operator}w is special cased when you're on the last word of a line. It won't go to the next line.
 // * The other hard thing I should start thinking about is .
 //   * Should not actually be _too_ hard since I could just save a reference to the previous state.
 //   * (And macros could be done by saving all states)
@@ -10,7 +13,7 @@ class VimAction {
   public modes: VimMode[]
   public key: string
 
-  constructor() {  }
+  constructor() { }
 
   doesActionApply(state: VimState, key: string): boolean {
     if (this.modes.indexOf(state.mode) === -1) return false;
@@ -146,6 +149,8 @@ class VimAction_b extends VimAction {
   }
 }
 
+let a: Thenable<any>
+
 class Keys {
 
   // TODO: Use a decorator rather than being literally idiotic
@@ -174,6 +179,8 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "vscvim" is now active!');
+
+  debugger
 
   VSCVim.getInstance(i => new Tests(i))
 

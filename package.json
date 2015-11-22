@@ -1,39 +1,83 @@
 {
-	"name": "vscvim",
-	"description": "vim extension for vsc",
-	"version": "0.0.1",
-	"publisher": "johnfn",
-	"engines": {
-		"vscode": "^0.10.1"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"*"
-	],
-	"main": "./out/src/vscvim",
-	"contributes": {
-		"keybindings": [
-			{ "command": "extension.press_i",      "key": "i"      },
-			{ "command": "extension.press_escape", "key": "escape" },
-			{ "command": "extension.press_h",      "key": "h"      },
-			{ "command": "extension.press_l",      "key": "l"      },
-      { "command": "extension.press_j",      "key": "j"      },
-      { "command": "extension.press_k",      "key": "k"      },
-      { "command": "extension.press_w",      "key": "w"      },
-      { "command": "extension.press_b",      "key": "b"      },
-      { "command": "extension.press_v",      "key": "v"      },
-			{ "command": "extension.press_d",      "key": "d"      },
-			{ "command": "extension.press_c",      "key": "c"      }
+  "name": "vscvim",
+  "description": "vim extension for vsc",
+  "version": "0.0.1",
+  "publisher": "johnfn",
+  "engines": {
+    "vscode": "^0.10.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/vscvim",
+  "contributes": {
+    "keybindings": [
+      {
+        "command": "extension.press_i",
+        "key": "i"
+      },
+      {
+        "command": "extension.press_escape",
+        "key": "escape"
+      },
+      {
+        "command": "extension.press_h",
+        "key": "h"
+      },
+      {
+        "command": "extension.press_l",
+        "key": "l"
+      },
+      {
+        "command": "extension.press_j",
+        "key": "j"
+      },
+      {
+        "command": "extension.press_k",
+        "key": "k"
+      },
+      {
+        "command": "extension.press_w",
+        "key": "w"
+      },
+      {
+        "command": "extension.press_b",
+        "key": "b"
+      },
+      {
+        "command": "extension.press_v",
+        "key": "v"
+      },
+      {
+        "command": "extension.press_d",
+        "key": "d"
+      },
+      {
+        "command": "extension.press_c",
+        "key": "c"
+      }
     ]
-	},
-	"scripts": {
-		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
-		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
-	},
-	"devDependencies": {
-		"typescript": "^1.6.2",
-		"vscode": "0.10.x"
-	}
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+    "compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.2.0",
+    "babel-core": "^6.2.1",
+    "babel-plugin-transform-runtime": "^6.1.18",
+    "babel-preset-es2015": "^6.1.18",
+    "babel-runtime": "^5.8.34",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.0",
+    "gulp-debug": "^2.1.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-typescript": "^2.9.2",
+    "tsc": "^1.20150623.0",
+    "typescript": "^1.8.0-dev.20151122",
+    "vscode": "0.10.x"
+  }
 }

@@ -1,3 +1,5 @@
+/// <reference path="../typings/vscode-typings.d.ts" />
+
 import { VSCVim } from "./vscvim"
 import {
   Selection,
@@ -14,6 +16,8 @@ interface IndividualTestResults {
   fails      : number
   messages   : string[]
 }
+
+console.log("Test ")
 
 interface OverallTestResults {
   totalTests             : number
