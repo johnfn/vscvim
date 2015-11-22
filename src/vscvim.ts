@@ -149,8 +149,6 @@ class VimAction_b extends VimAction {
   }
 }
 
-let a: Thenable<any>
-
 class Keys {
 
   // TODO: Use a decorator rather than being literally idiotic
@@ -179,8 +177,6 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "vscvim" is now active!');
-
-  debugger
 
   VSCVim.getInstance(i => new Tests(i))
 
