@@ -126,7 +126,7 @@ export class Tests extends TestHarness {
   constructor(v: VSCVim) {
     super()
 
-    this.test("hjkl", () => {
+    this.test("hjkl motions", () => {
       return this.setText(`
 TEST
 TEST
@@ -173,7 +173,7 @@ TEST`).then(() => {
       })
     })
 
-    this.test("wb", () => {
+    this.test("wb motions", () => {
       return this.setText(`
 0 23 567 9
 0 2 4 6

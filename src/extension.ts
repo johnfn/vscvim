@@ -62,30 +62,41 @@ class VimAction_j extends VimAction {
 }
 
 class VimAction_k extends VimAction {
-	modes = [VimMode.Normal];
-	key  = "k";
+	modes = [VimMode.Normal]
+	key  = "k"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
 			textAction: new TextMotionMovement(MovementDirection.Up, 1)
-		});
+		})
 	}
 }
 
 class VimAction_i extends VimAction {
-	modes = [VimMode.Normal];
-	key  = "i";
+	modes = [VimMode.Normal]
+	key  = "i"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
 			mode: VimMode.Insert
-		});
+		})
+	}
+}
+
+class VimAction_v extends VimAction {
+	modes = [VimMode.Normal]
+	key  = "v"
+
+	runAction(state: VimState): VimState {
+		return clone(state, {
+			mode: VimMode.Visual
+		})
 	}
 }
 
 class VimAction_escape extends VimAction {
-	modes = [VimMode.Insert];
-	key  = "escape";
+	modes = [VimMode.Insert, VimMode.Visual]
+	key  = "escape"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
@@ -95,8 +106,8 @@ class VimAction_escape extends VimAction {
 }
 
 class VimAction_d extends VimAction {
-	modes = [VimMode.Normal];
-	key = "d";
+	modes = [VimMode.Normal]
+	key = "d"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
@@ -106,35 +117,35 @@ class VimAction_d extends VimAction {
 }
 
 class VimAction_c extends VimAction {
-	modes = [VimMode.Normal];
-	key = "c";
+	modes = [VimMode.Normal]
+	key = "c"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
 			command: new VimOperatorChange()
-		});
+		})
 	}
 }
 
 class VimAction_w extends VimAction {
-	modes = [VimMode.Normal];
-	key = "w";
+	modes = [VimMode.Normal]
+	key = "w"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
 			textAction: new TextMotionWord({ forward: true })
-		});
+		})
 	}
 }
 
 class VimAction_b extends VimAction {
-	modes = [VimMode.Normal];
-	key = "b";
+	modes = [VimMode.Normal]
+	key = "b"
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
 			textAction: new TextMotionWord({ forward: false })
-		});
+		})
 	}
 }
 
@@ -256,18 +267,44 @@ const enum MovementDirection {
 }
 
 interface VimState {
-	mode: VimMode;
-	command: VimOperator;
-	mostRecentKey: string;
-	textAction: TextMotion;
+  /**
+   * Which mode we're in.
+   */
+	mode          : VimMode;
+
+  /**
+   * Which operator we're going to apply (e.g. change, delete, indent left)
+   */
+	command       : VimOperator;
+
+  /**
+   * The most recent key pressed. (TODO: Not sure if this is necessary).
+   */
+	mostRecentKey : string;
+
+  /**
+   * The text action we're going to apply - will create a new location for the cursor.
+   */
+	textAction    : TextMotion;
+
+  /**
+   * The location of the cursor.
+   */
+  cursor        : vscode.Position;
+
+  /**
+   * The end of the selection that starts at the cursor. Only applicable in
+   * Visual Mode.
+   */
+  cursorEnd     : vscode.Position;
 }
 
 interface TextMotion {
   /**
-   * Runs this text motion, returning a selection indicating where the
+   * Runs this text motion, returning a position indicating where the
    * text motion is now located.
    */
-	runTextMotion(): vscode.Selection;
+	runTextMotion(): vscode.Position;
 }
 
 class TextMotionMovement implements TextMotion {
@@ -279,7 +316,7 @@ class TextMotionMovement implements TextMotion {
 		this._amount = amount;
 	}
 
-	runTextMotion(): vscode.Selection {
+	runTextMotion(): vscode.Position {
 		const editor = vscode.window.activeTextEditor;
 		const pos    = editor.selection.start;
 
@@ -290,18 +327,12 @@ class TextMotionMovement implements TextMotion {
 			let newchar = pos.character + (this._direction === MovementDirection.Left ? -1 : 1)
       newchar     = Util.constrain(newchar, 0, editor.document.lineAt(pos.line).text.length - 1)
 
-			const start = new vscode.Position(pos.line, newchar)
-			const end   = new vscode.Position(pos.line, newchar)
-
-			return new vscode.Selection(start, end)
+			return new vscode.Position(pos.line, newchar)
 		} else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
 			let newline = pos.line + (this._direction === MovementDirection.Up ? -1 : 1)
       newline     = Util.constrain(newline, 0, editor.document.lineCount - 1)
 
-			const start = new vscode.Position(newline, pos.character)
-			const end   = new vscode.Position(newline, pos.character)
-
-			return new vscode.Selection(start, end)
+			return new vscode.Position(newline, pos.character)
 		}
 	}
 }
@@ -439,12 +470,12 @@ class TextMotionWord implements TextMotion {
     this._forward = params.forward;
   }
 
-  runTextMotion(): vscode.Selection {
+  runTextMotion(): vscode.Position {
     const editor        = vscode.window.activeTextEditor
-    let nextWordPosition;
+    let   nextWordPosition;
 
     if (this._forward) {
-      let   seenDelimiter = false
+      let seenDelimiter = false
 
       nextWordPosition = Util.forEachChar((pos, char, done) => {
         if (TextMotionWord.isDelimiter(char)) {
@@ -470,7 +501,7 @@ class TextMotionWord implements TextMotion {
     }
 
 
-    return new vscode.Selection(nextWordPosition, nextWordPosition);
+    return nextWordPosition
   }
 }
 
@@ -531,6 +562,8 @@ export class VSCVim {
 			mode          : VimMode.Normal,
 			mostRecentKey : "",
 			textAction    : null,
+      cursor        : vscode.window.activeTextEditor.selection.start,
+      cursorEnd     : null,
 			command       : new VimOperatorMove()
 		}
 
@@ -575,7 +608,7 @@ export class VSCVim {
 			});
 		} else {
 			if (newState.textAction) {
-				const newPosition = newState.textAction.runTextMotion().start;
+				const newPosition = newState.textAction.runTextMotion();
 				const oldPosition = vscode.window.activeTextEditor.selection.start;
 
 				newState.command.runOperator(newState, oldPosition, newPosition);
