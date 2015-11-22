@@ -88,8 +88,8 @@ class VimAction_v extends VimAction {
 
 	runAction(state: VimState): VimState {
 		return clone(state, {
-			mode      : VimMode.Visual,
-      cursorEnd : state.cursor
+			mode        : VimMode.Visual,
+      cursorStart : state.cursor
 		})
 	}
 }
@@ -296,10 +296,9 @@ interface VimState {
   cursor        : vscode.Position;
 
   /**
-   * The end of the selection that starts at the cursor. Only applicable in
-   * Visual Mode.
+   * This is the location at which you switched into visual mode.
    */
-  cursorEnd     : vscode.Position;
+  cursorStart  : vscode.Position;
 }
 
 interface TextMotion {
@@ -555,7 +554,7 @@ export class VSCVim {
 			mostRecentKey : "",
 			textAction    : null,
       cursor        : vscode.window.activeTextEditor.selection.start,
-      cursorEnd     : null,
+      cursorStart   : null,
 			command       : null // TODO: Use Maybe<T>?
 		}
 
@@ -630,12 +629,18 @@ export class VSCVim {
         }
 
         if (newState.mode === VimMode.Visual) {
-          const newPosition = newState.textAction.runTextMotion(newState.cursor)
+          if (newState.textAction) {
+            const newPosition = newState.textAction.runTextMotion(newState.cursor)
+            newState.cursor = newPosition
+          }
 
-          newState.cursor = newPosition
+          if (newState.command) {
+            newState.command.runOperator(newState, newState.cursorStart, newState.cursor)
+          }
+
+          newState.textAction = null
+          newState.command    = null
         }
-
-
 
         // Operations done. Keep the editor in sync with the state.
 
@@ -644,7 +649,7 @@ export class VSCVim {
         }
 
         if (newState.mode === VimMode.Visual) {
-          editor.selection = new vscode.Selection(newState.cursorEnd, newState.cursor)
+          editor.selection = new vscode.Selection(newState.cursorStart, newState.cursor)
         }
 			}
 		}
