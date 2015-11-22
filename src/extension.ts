@@ -15,9 +15,9 @@ class VimAction {
 
 	constructor() {	}
 
-	doesActionApply(state: VimState): boolean {
-		if (this.modes.indexOf(state.mode) === -1)        return false;
-		if (this.key.indexOf(state.mostRecentKey) === -1) return false;
+	doesActionApply(state: VimState, key: string): boolean {
+		if (this.modes.indexOf(state.mode) === -1) return false;
+		if (this.key.indexOf(key) === -1)          return false;
 
 		return true;
 	}
@@ -558,10 +558,10 @@ export class VSCVim {
     if (VSCVim.onInstanceChanged) VSCVim.onInstanceChanged()
 	}
 
-	updateStatusBar(): void {
+	private updateStatusBar(state: VimState): void {
 		let status: string;
 
-		switch (this.state.mode) {
+		switch (state.mode) {
 			case VimMode.Insert: status = "INSERT MODE"; break
 			case VimMode.Normal: status = "NORMAL MODE"; break
       case VimMode.Visual: status = "VISUAL MODE"; break
@@ -571,25 +571,34 @@ export class VSCVim {
 		vscode.window.setStatusBarMessage(status)
 	}
 
-	sendKey(key: string): void {
-		let newState = clone(this.state)
-    newState.mostRecentKey = key
+  private showErrorMessage(msg: string): void {
+    vscode.window.showErrorMessage(`[VSCVim]: ${msg}`)
+  }
 
-		let didKeyApply = false
-		const editor = vscode.window.activeTextEditor
+  private runSanityChecks(state: VimState): void {
+    const editor = vscode.window.activeTextEditor
 
-    // quick sanity check
-    if (!this.truncatePosition(newState.cursor).isEqual(editor.selection.end)) {
-      console.log("cursor is ", newState.cursor)
+    if (!this.truncatePosition(state.cursor).isEqual(editor.selection.end)) {
+      console.log("cursor is ", state.cursor)
       console.log("sel is ", editor.selection.start, editor.selection.end);
 
-      vscode.window.showErrorMessage("DESYNCHRONY BETWEEN CURSOR AND REALITY. CALL THE POLICE IMMEDIATELY")
+      this.showErrorMessage("DESYNCHRONY BETWEEN CURSOR AND REALITY. CALL THE POLICE IMMEDIATELY")
     }
+  }
+
+  /**
+   * Given the key that was pressed and the current VimState,
+   * returns a new VimState. Also returns a boolean which indicates
+   * whether any change was made to the state.
+   */
+  private applyKeystrokeToState(state: VimState, key: string): [VimState, boolean] {
+    let newState    = state
+    let didKeyApply = false
 
 		for (const action of Keys.actions) {
-			if (action.doesActionApply(newState)) {
+			if (action.doesActionApply(newState, key)) {
 				if (didKeyApply) {
-					vscode.window.showErrorMessage("[VSCVIM ERROR] More than 1 key applied");
+					this.showErrorMessage("[VSCVIM ERROR] More than 1 key applied");
 				}
 
 				newState = action.runAction(newState);
@@ -598,63 +607,101 @@ export class VSCVim {
 			}
 		}
 
-		if (!didKeyApply) {
+    return [newState, didKeyApply]
+  }
+
+  /**
+   * Given a VimState in Normal mode, determine if the user has entered a full
+   * Vim command, and if so, update the state accordingly.
+   */
+  private tryToRunStateInNormalMode(state: VimState): boolean {
+    if (!state.textAction) return false
+
+    const newPosition = state.textAction.runTextMotion(state.cursor)
+
+    if (state.command) {
+      state.command.runOperator(state, state.cursor, newPosition)
+    } else {
+      state.cursor = newPosition
+    }
+
+    return true
+  }
+
+  /**
+   * Given a VimState in Visual mode, determine if the user has entered a full
+   * Vim command, and if so, update the state accordingly.
+   */
+  private tryToRunStateInVisualMode(state: VimState): boolean {
+    if (state.textAction) {
+      const newPosition = state.textAction.runTextMotion(state.cursor)
+      state.cursor = newPosition
+    }
+
+    if (state.command) {
+      state.command.runOperator(state, state.cursorStart, state.cursor)
+      state.mode = VimMode.Normal
+
+      state.cursor = state.cursorStart
+    }
+
+    return true
+  }
+
+  private giganticHackForUnusedKeys(key: string): void {
       // TODO: This is a total hack because I don't currently know the correct way
       // to ignore keystrokes.
 
       if (["escape"].indexOf(key) === -1) {
         vscode.window.activeTextEditor.edit((e: vscode.TextEditorEdit) => {
-          e.insert(editor.selection.start, key)
+          e.insert(Util.editor.selection.start, key)
         });
       }
-		} else {
-      if (newState.mode === VimMode.Normal && newState.textAction) {
-        const newPosition = newState.textAction.runTextMotion(newState.cursor)
+  }
 
-        if (newState.command) {
-          newState.command.runOperator(newState, newState.cursor, newPosition)
-        } else {
-          newState.cursor = newPosition
-        }
+  /**
+   * The method that starts it all in VSCVim. Given a keystroke input,
+   * updates the inner state and, if necessary, the editor accordingly.
+   */
+	sendKey(key: string): void {
+    const editor = vscode.window.activeTextEditor
 
-        // Clear out vim state
+    this.runSanityChecks(this.state)
 
-        newState.textAction = null
-        newState.command    = null
-      }
+    const [newState, didKeyApply] = this.applyKeystrokeToState(this.state, key)
 
-      if (newState.mode === VimMode.Visual) {
-        if (newState.textAction) {
-          const newPosition = newState.textAction.runTextMotion(newState.cursor)
-          newState.cursor = newPosition
-        }
+		if (!didKeyApply) {
+      this.giganticHackForUnusedKeys(key)
+      return
+		}
 
-        if (newState.command) {
-          newState.command.runOperator(newState, newState.cursorStart, newState.cursor)
-          newState.mode = VimMode.Normal
+    let couldRunState = false
 
-          newState.cursor = newState.cursorStart
-        }
-
-        newState.textAction = null
-        newState.command    = null
-      }
-
-      // Operations done. Keep the editor in sync with the state.
-
-      if (newState.mode === VimMode.Normal) {
-        editor.selection = new vscode.Selection(newState.cursor, newState.cursor)
-      }
-
-      if (newState.mode === VimMode.Visual) {
-        editor.selection = new vscode.Selection(newState.cursorStart, newState.cursor)
-      }
+    switch (newState.mode) {
+      case VimMode.Normal: couldRunState = this.tryToRunStateInNormalMode(newState); break
+      case VimMode.Visual: couldRunState = this.tryToRunStateInVisualMode(newState); break
+      default: break
     }
 
+    if (couldRunState) {
+      // Reset state for next action.
+
+      newState.textAction = null
+      newState.command    = null
+    }
+
+    // Operations done. Keep the editor in sync with the state.
+    if (newState.mode === VimMode.Normal) {
+      editor.selection = new vscode.Selection(newState.cursor, newState.cursor)
+    }
+
+    if (newState.mode === VimMode.Visual) {
+      editor.selection = new vscode.Selection(newState.cursorStart, newState.cursor)
+    }
+
+    this.updateStatusBar(newState)
 
 		this.state = newState;
-
-		this.updateStatusBar()
 	}
 
   /**
@@ -663,7 +710,7 @@ export class VSCVim {
    * used for some validations and not generally helpful, since
    * vscode does not choke on positions like that.
    */
-  truncatePosition(p: vscode.Position): vscode.Position {
+  private truncatePosition(p: vscode.Position): vscode.Position {
     let newPosition = p
 		const editor = vscode.window.activeTextEditor
 
@@ -674,8 +721,9 @@ export class VSCVim {
 
     return newPosition
   }
-  // For testing only. //
 
+
+  // For testing only. //
 
   private static instance: VSCVim;
 
