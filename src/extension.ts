@@ -10,9 +10,8 @@ import * as vscode from 'vscode';
 import { Tests } from "./tests"
 
 class VimAction {
-	public modes: VimMode[];
-	public key: string;
-  public insertsKey: string;
+	public modes: VimMode[]
+	public key: string
 
 	constructor() {	}
 
@@ -129,7 +128,7 @@ class VimAction_c extends VimAction {
 }
 
 class VimAction_w extends VimAction {
-	modes = [VimMode.Normal]
+	modes = [VimMode.Normal, VimMode.Visual]
 	key = "w"
 
 	runAction(state: VimState): VimState {
@@ -140,7 +139,7 @@ class VimAction_w extends VimAction {
 }
 
 class VimAction_b extends VimAction {
-	modes = [VimMode.Normal]
+	modes = [VimMode.Normal, VimMode.Visual]
 	key = "b"
 
 	runAction(state: VimState): VimState {
@@ -568,10 +567,10 @@ export class VSCVim {
 		let status: string;
 
 		switch (this.state.mode) {
-			case VimMode.Insert: status = "INSERT MODE"; break;
-			case VimMode.Normal: status = "NORMAL MODE"; break;
-      case VimMode.Visual: status = "VISUAL MODE"; break;
-			default:             status = "??? MODE";    break;
+			case VimMode.Insert: status = "INSERT MODE"; break
+			case VimMode.Normal: status = "NORMAL MODE"; break
+      case VimMode.Visual: status = "VISUAL MODE"; break
+			default:             status = "??? MODE";    break
 		}
 
 		vscode.window.setStatusBarMessage(status)
@@ -580,13 +579,15 @@ export class VSCVim {
 	sendKey(key: string): void {
 		let newState = clone(this.state, {
 			mostRecentKey: key
-		});
-		let didKeyApply = false;
-		const editor = vscode.window.activeTextEditor;
+		})
+		let didKeyApply = false
+		const editor = vscode.window.activeTextEditor
 
     // quick sanity check
+    if (!this.truncatePosition(newState.cursor).isEqual(editor.selection.end)) {
+      console.log("cursor is ", newState.cursor)
+      console.log("sel is ", editor.selection.start, editor.selection.end);
 
-    if (!newState.cursor.isEqual(editor.selection.start)) {
       vscode.window.showErrorMessage("DESYNCHRONY BETWEEN CURSOR AND REALITY. CALL THE POLICE IMMEDIATELY")
     }
 
@@ -603,9 +604,14 @@ export class VSCVim {
 		}
 
 		if (!didKeyApply) {
-			vscode.window.activeTextEditor.edit((e: vscode.TextEditorEdit) => {
-				e.insert(editor.selection.start, key)
-			});
+      // TODO: This is a total hack because I don't currently know the correct way
+      // to ignore keystrokes.
+
+      if (["escape"].indexOf(key) === -1) {
+        vscode.window.activeTextEditor.edit((e: vscode.TextEditorEdit) => {
+          e.insert(editor.selection.start, key)
+        });
+      }
 		} else {
 			if (newState.textAction) {
         if (newState.mode === VimMode.Normal) {
@@ -629,6 +635,8 @@ export class VSCVim {
           newState.cursor = newPosition
         }
 
+
+
         // Operations done. Keep the editor in sync with the state.
 
         if (newState.mode === VimMode.Normal) {
@@ -636,7 +644,7 @@ export class VSCVim {
         }
 
         if (newState.mode === VimMode.Visual) {
-          editor.selection = new vscode.Selection(newState.cursor, newState.cursorEnd)
+          editor.selection = new vscode.Selection(newState.cursorEnd, newState.cursor)
         }
 			}
 		}
@@ -647,6 +655,23 @@ export class VSCVim {
 		this.updateStatusBar()
 	}
 
+  /**
+   * Given a position p which might have a character field past the
+   * length of the line, returns a valid position p. Really just
+   * used for some validations and not generally helpful, since
+   * vscode does not choke on positions like that.
+   */
+  truncatePosition(p: vscode.Position): vscode.Position {
+    let newPosition = p
+		const editor = vscode.window.activeTextEditor
+
+    if (p.character > editor.document.lineAt(p.line).text.length) {
+      const newCh = editor.document.lineAt(p.line).text.length
+      newPosition = new vscode.Position(p.line, newCh)
+    }
+
+    return newPosition
+  }
   // For testing only. //
 
 
