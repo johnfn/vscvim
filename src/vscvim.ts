@@ -46,12 +46,6 @@ class VimAction_l extends VimAction {
   }
 }
 
-const test = function*() {
-  console.log("yay")
-}
-
-test()
-
 class VimAction_j extends VimAction {
   modes = [VimMode.Normal, VimMode.Visual];
   key  = "j";
