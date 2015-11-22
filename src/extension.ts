@@ -288,18 +288,18 @@ class TextMotionMovement implements TextMotion {
 		
 		if (this._direction === MovementDirection.Left || this._direction === MovementDirection.Right) {
 			let newchar = pos.character + (this._direction === MovementDirection.Left ? -1 : 1)
-      newchar     = Util.constrain(newchar, 0, editor.document.lineAt(pos.line).text.length)
+      newchar     = Util.constrain(newchar, 0, editor.document.lineAt(pos.line).text.length - 1)
       
-			const start = new vscode.Position(pos.line, newchar);
-			const end   = new vscode.Position(pos.line, newchar);
+			const start = new vscode.Position(pos.line, newchar)
+			const end   = new vscode.Position(pos.line, newchar)
 			
 			return new vscode.Selection(start, end)
 		} else if (this._direction === MovementDirection.Up || this._direction === MovementDirection.Down) {
 			let newline = pos.line + (this._direction === MovementDirection.Up ? -1 : 1)
-      newline     = Util.constrain(newline, 0, editor.document.lineCount)
+      newline     = Util.constrain(newline, 0, editor.document.lineCount - 1)
 			
-			const start = new vscode.Position(newline, pos.character);
-			const end   = new vscode.Position(newline, pos.character);
+			const start = new vscode.Position(newline, pos.character)
+			const end   = new vscode.Position(newline, pos.character)
 			
 			return new vscode.Selection(start, end)
 		}

@@ -128,21 +128,59 @@ export class Tests extends TestHarness {
     
     this.test("hjkl", () => {
       return this.setText(`
-THIS IS ONLY
-A TEST.`).then(() => {
+TEST
+TEST
+TEST
+TEST`).then(() => {
+  
+        /* test l and h */
 
         v.sendKey("l")
         this.shouldEqual(this.editor.selection.start, new Position(0, 1))
         
         v.sendKey("h")
         this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+    
+        /* test j and k */
+    
+        v.sendKey("j")
+        this.shouldEqual(this.editor.selection.start, new Position(1, 0))
         
-        v.sendKey("h")
+        v.sendKey("k")
+        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+            
+        /* check h edge condition */
+        
+        for (let i = 0; i < 10; i++) v.sendKey("h")
+        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+        
+        /* check l edge condition */
+        
+        for (let i = 0; i < 10; i++) v.sendKey("l")
+        this.shouldEqual(this.editor.selection.start, new Position(0, 3))
+        
+        this.resetSelection()
+ 
+        /* check j edge condition */
+        
+        for (let i = 0; i < 10; i++) v.sendKey("j")
+        this.shouldEqual(this.editor.selection.start, new Position(3, 0))
+        
+        /* check k edge condition */
+        
+        for (let i = 0; i < 10; i++) v.sendKey("k")
         this.shouldEqual(this.editor.selection.start, new Position(0, 0))
       })
     })
     
     this.runTests()
+  }
+  
+  /**
+   * Sets the position of the cursor to (0, 0).
+   */
+  resetSelection(): void {
+    this.editor.selection = new Selection(new Position(0, 0), new Position(0, 0))
   }
   
   /**
@@ -168,7 +206,7 @@ FOR CONVENIENCE.`)
         e.insert(new Position(0, 0), formattedText)
       })
     }).then(res => {
-      this.editor.selections = [new Selection(new Position(0, 0), new Position(0, 0))]
+      this.resetSelection()
     })
   }
   
