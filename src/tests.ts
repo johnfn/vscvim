@@ -194,6 +194,12 @@ TEST`).then(() => {
           v.sendKey("w")
           this.shouldEqual(this.cursor, pos)
         }
+
+        /* test b by going in reverse (skip the last position for the same reason) */
+        for (const pos of wordStartLocations.reverse().slice(1)) {
+          v.sendKey("b")
+          this.shouldEqual(this.cursor, pos)
+        }
       })
     })
 
