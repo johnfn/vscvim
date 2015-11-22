@@ -485,17 +485,17 @@ class VimOperator {
 
   }
 
-  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+  async runOperator(state: VimState, start: vscode.Position, end: vscode.Position): Promise<VimState> {
     throw "unimplemented";
   }
 }
 
 class VimOperatorDelete implements VimOperator {
-  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+  async runOperator(state: VimState, start: vscode.Position, end: vscode.Position): Promise<VimState> {
     const editor = vscode.window.activeTextEditor;
     const range  = new vscode.Range(start, end);
 
-    editor.edit((e: vscode.TextEditorEdit) => {
+    await editor.edit((e: vscode.TextEditorEdit) => {
       e.delete(range);
     });
 
@@ -504,11 +504,11 @@ class VimOperatorDelete implements VimOperator {
 }
 
 class VimOperatorChange implements VimOperator {
-  runOperator(state: VimState, start: vscode.Position, end: vscode.Position): VimState {
+  async runOperator(state: VimState, start: vscode.Position, end: vscode.Position): Promise<VimState> {
     const editor = vscode.window.activeTextEditor;
     const range  = new vscode.Range(start, end);
 
-    editor.edit((e: vscode.TextEditorEdit) => {
+    await editor.edit((e: vscode.TextEditorEdit) => {
       e.delete(range);
     });
 
@@ -591,13 +591,13 @@ export class VSCVim {
    * Given a VimState in Normal mode, determine if the user has entered a full
    * Vim command, and if so, update the state accordingly.
    */
-  private tryToRunStateInNormalMode(state: VimState): boolean {
+  private async tryToRunStateInNormalMode(state: VimState): Promise<boolean> {
     if (!state.textAction) return false
 
     const newPosition = state.textAction.runTextMotion(state.cursor)
 
     if (state.command) {
-      state.command.runOperator(state, state.cursor, newPosition)
+      await state.command.runOperator(state, state.cursor, newPosition)
     } else {
       state.cursor = newPosition
     }
@@ -609,14 +609,14 @@ export class VSCVim {
    * Given a VimState in Visual mode, determine if the user has entered a full
    * Vim command, and if so, update the state accordingly.
    */
-  private tryToRunStateInVisualMode(state: VimState): boolean {
+  private async tryToRunStateInVisualMode(state: VimState): Promise<boolean> {
     if (state.textAction) {
       const newPosition = state.textAction.runTextMotion(state.cursor)
       state.cursor = newPosition
     }
 
     if (state.command) {
-      state.command.runOperator(state, state.cursorStart, state.cursor)
+      await state.command.runOperator(state, state.cursorStart, state.cursor)
       state.mode = VimMode.Normal
 
       state.cursor = state.cursorStart
@@ -640,7 +640,7 @@ export class VSCVim {
    * The method that starts it all in VSCVim. Given a keystroke input,
    * updates the inner state and, if necessary, the editor accordingly.
    */
-  sendKey(key: string): void {
+  async sendKey(key: string): Promise<{}> {
     const editor = vscode.window.activeTextEditor
 
     this.runSanityChecks(this.state)
@@ -655,8 +655,8 @@ export class VSCVim {
     let couldRunState = false
 
     switch (newState.mode) {
-      case VimMode.Normal: couldRunState = this.tryToRunStateInNormalMode(newState); break
-      case VimMode.Visual: couldRunState = this.tryToRunStateInVisualMode(newState); break
+      case VimMode.Normal: couldRunState = await this.tryToRunStateInNormalMode(newState); break
+      case VimMode.Visual: couldRunState = await this.tryToRunStateInVisualMode(newState); break
       default: break
     }
 

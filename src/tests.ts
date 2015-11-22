@@ -149,93 +149,90 @@ export class Tests extends TestHarness {
 
     this.v = v;
 
-    this.test("hjkl motions", () => {
-      return this.setText(`
+    this.test("hjkl motions", async () => {
+      await this.setText(`
 TEST
 TEST
 TEST
-TEST`).then(() => {
+TEST`)
 
-        /* test l and h */
+      /* test l and h */
 
-        v.sendKey("l")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 1))
+      await v.sendKey("l")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 1))
 
-        v.sendKey("h")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+      await v.sendKey("h")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 0))
 
-        /* test j and k */
+      /* test j and k */
 
-        v.sendKey("j")
-        this.shouldEqual(this.editor.selection.start, new Position(1, 0))
+      await v.sendKey("j")
+      this.shouldEqual(this.editor.selection.start, new Position(1, 0))
 
-        v.sendKey("k")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+      await v.sendKey("k")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 0))
 
-        /* check h edge condition */
+      /* check h edge condition */
 
-        for (let i = 0; i < 10; i++) v.sendKey("h")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
+      for (let i = 0; i < 10; i++) await v.sendKey("h")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 0))
 
-        /* check l edge condition */
+      /* check l edge condition */
 
-        for (let i = 0; i < 10; i++) v.sendKey("l")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 3))
+      for (let i = 0; i < 10; i++) await v.sendKey("l")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 3))
 
-        this.resetSelection()
+      this.resetSelection()
 
-        /* check j edge condition */
+      /* check j edge condition */
 
-        for (let i = 0; i < 10; i++) v.sendKey("j")
-        this.shouldEqual(this.editor.selection.start, new Position(3, 0))
+      for (let i = 0; i < 10; i++) await v.sendKey("j")
+      this.shouldEqual(this.editor.selection.start, new Position(3, 0))
 
-        /* check k edge condition */
+      /* check k edge condition */
 
-        for (let i = 0; i < 10; i++) v.sendKey("k")
-        this.shouldEqual(this.editor.selection.start, new Position(0, 0))
-      })
+      for (let i = 0; i < 10; i++) await v.sendKey("k")
+      this.shouldEqual(this.editor.selection.start, new Position(0, 0))
     })
 
-    this.test("wb motions", () => {
-      return this.setText(`
+    this.test("wb motions", async () => {
+      await this.setText(`
 0 23 567 9
 0 2 4 6
 
-01 3456`).then(() => {
+01 3456`)
 
-        /* the location of the start of every word. */
+      /* the location of the start of every word. */
 
-        const wordStartLocations = [
-          [0, 0], [0, 2], [0, 5], [0, 9],
-          [1, 0], [1, 2], [1, 4], [1, 6],
-          [2, 0],
-          [3, 0], [3, 3], [3, 6]
-        ].map(([l, c]) => new Position(l, c))
+      const wordStartLocations = [
+        [0, 0], [0, 2], [0, 5], [0, 9],
+        [1, 0], [1, 2], [1, 4], [1, 6],
+        [2, 0],
+        [3, 0], [3, 3], [3, 6]
+      ].map(([l, c]) => new Position(l, c))
 
-        /* test w (skip the first position since we're already on it) */
-        for (const pos of wordStartLocations.slice(1)) {
-          v.sendKey("w")
-          this.shouldEqual(this.cursor, pos)
-        }
+      /* test w (skip the first position since we're already on it) */
+      for (const pos of wordStartLocations.slice(1)) {
+        await v.sendKey("w")
+        this.shouldEqual(this.cursor, pos)
+      }
 
-        /* test b by going in reverse (skip the last position for the same reason) */
-        for (const pos of wordStartLocations.reverse().slice(1)) {
-          v.sendKey("b")
-          this.shouldEqual(this.cursor, pos)
-        }
-      })
+      /* test b by going in reverse (skip the last position for the same reason) */
+      for (const pos of wordStartLocations.reverse().slice(1)) {
+        await v.sendKey("b")
+        this.shouldEqual(this.cursor, pos)
+      }
     })
 
-    this.test("dw", () => {
-      return this.setText(`
+    this.test("dw", async () => {
+      await this.setText(`
 abde efg hgi
 
-jklm`).then(() => {
-        v.sendKey("d")
-        v.sendKey("w")
+jklm`)
+      await v.sendKey("d")
+      await v.sendKey("w")
 
-        this.shouldEqual(this.document.getText(), `efg hgi\n\njklm`)
-      })
+      this.shouldEqual(this.document.getText(), `efg hgi\n\njklm`)
     })
 
     this.runTests()
