@@ -173,7 +173,38 @@ TEST`).then(() => {
       })
     })
 
+    this.test("wb", () => {
+      return this.setText(`
+0 23 567 9
+0 2 4 6
+
+01 3456`).then(() => {
+
+        /* the location of the start of every word. */
+
+        const wordStartLocations = [
+          [0, 0], [0, 2], [0, 5], [0, 9],
+          [1, 0], [1, 2], [1, 4], [1, 6],
+          [2, 0],
+          [3, 0], [3, 3], [3, 6]
+        ].map(([l, c]) => new Position(l, c))
+
+        /* test w (skip the first position since we're already on it) */
+        for (const pos of wordStartLocations.slice(1)) {
+          v.sendKey("w")
+          this.shouldEqual(this.cursor, pos)
+        }
+      })
+    })
+
     this.runTests()
+  }
+
+  /**
+   * Convenience method to get the location of the cursor (assuming there is no selection)
+   */
+  get cursor(): Position {
+    return this.editor.selection.start
   }
 
   /**
